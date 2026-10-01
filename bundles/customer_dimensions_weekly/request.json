@@ -1,0 +1,45 @@
+{
+  "bundle_name": "customer_dimensions_weekly",
+  "pattern": "full_refresh",
+  "description": "Weekly full refresh of customer dimensions from vendor CSV export",
+  "version": "1.0.0",
+  "created_by": "analytics-team",
+  "created_at": "2026-10-01",
+  "parameters": {
+    "source_path": "s3://vendor-imports/customer-data/",
+    "source_format": "csv",
+    "destination_catalog": "production",
+    "destination_schema": "analytics",
+    "destination_table": "dim_customer",
+    "primary_key_columns": [
+      "customer_id"
+    ],
+    "incremental_key": null,
+    "cluster_by": [],
+    "partition_columns": [],
+    "has_header": true,
+    "delimiter": ",",
+    "not_null_columns": [],
+    "min_expected_rows": 1000,
+    "freshness_sla_hours": null
+  },
+  "cluster_config": {
+    "spark_version": "15.4.x-scala2.12",
+    "node_type_id": "i3.large",
+    "driver_node_type_id": null,
+    "num_workers": 2,
+    "autoscale": null,
+    "photon": true
+  },
+  "job_config": {
+    "schedule": "0 1 * * 0",
+    "timezone": "UTC",
+    "max_concurrent_runs": 1,
+    "timeout_seconds": 1800,
+    "max_retries": 1,
+    "email_on_failure": [
+      "analytics-team@company.com"
+    ],
+    "workspace_root": "/Workspace/ETL"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "bundle_name": "customer_dimensions_weekly",
+  "pattern": "full_refresh",
+  "description": "Weekly full refresh of customer dimensions from vendor CSV export",
+  "created_by": "analytics-team",
+  "created_at": "2026-10-01",
+  "parameters": {
+    "source_path": "s3://vendor-imports/customer-data/",
+    "source_format": "csv",
+    "destination_catalog": "production",
+    "destination_schema": "analytics",
+    "destination_table": "dim_customer",
+    "primary_key_columns": ["customer_id"],
+    "has_header": true,
+    "delimiter": ",",
+    "min_expected_rows": 1000
+  },
+  "cluster_config": {
+    "node_type_id": "i3.large",
+    "num_workers": 2
+  },
+  "job_config": {
+    "schedule": "0 1 * * 0",
+    "timeout_seconds": 1800,
+    "email_on_failure": ["analytics-team@company.com"]
+  }
+}

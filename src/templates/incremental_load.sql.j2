@@ -1,0 +1,69 @@
+{%- import '_macros.sql.j2' as m -%}
+{%- set p = r.parameters -%}
+{%- set pk = p.primary_key_columns -%}
+{%- set k = p.incremental_key -%}
+{{ m.header(r, "Incremental load: " ~ p.source_format ~ " files -> " ~ r.target_table) }}
+
+-- COMMAND ----------
+
+{{ m.source_view('source_raw', p) }}
+
+-- COMMAND ----------
+
+-- Create the target on first run with the source schema (no-op afterwards).
+CREATE TABLE IF NOT EXISTS {{ r.target_table }}
+{{ m.layout(p) -}}
+AS SELECT * FROM source_raw LIMIT 0;
+
+-- COMMAND ----------
+
+-- Batch = rows at or after the current watermark. Using >= (not >) re-reads the boundary so
+-- late rows sharing the max {{ k }} are not lost; the MERGE below makes that idempotent.
+CREATE OR REPLACE TEMPORARY VIEW batch AS
+SELECT *
+FROM source_raw
+WHERE (SELECT MAX({{ k }}) FROM {{ r.target_table }}) IS NULL
+   OR {{ k }} >= (SELECT MAX({{ k }}) FROM {{ r.target_table }});
+
+-- COMMAND ----------
+
+{{ m.not_null_check('batch', pk, 'primary key (' ~ pk | join(', ') ~ ')') }}
+
+{% if p.not_null_columns %}
+{{ m.not_null_check('batch', p.not_null_columns, 'required columns (' ~ p.not_null_columns | join(', ') ~ ')') }}
+
+{% endif %}
+-- COMMAND ----------
+
+-- Keep only the latest version of each key within the batch.
+CREATE OR REPLACE TEMPORARY VIEW batch_deduped AS
+SELECT *
+FROM batch
+QUALIFY ROW_NUMBER() OVER (PARTITION BY {{ pk | join(', ') }} ORDER BY {{ k }} DESC) = 1;
+
+DECLARE OR REPLACE VARIABLE rows_loaded BIGINT DEFAULT 0;
+SET VAR rows_loaded = (SELECT COUNT(*) FROM batch_deduped);
+
+-- COMMAND ----------
+
+-- Upsert. Only strictly newer source rows overwrite existing ones.
+MERGE INTO {{ r.target_table }} AS t
+USING batch_deduped AS s
+ON {% for c in pk %}
+{{ '  AND ' if not loop.first }}t.{{ c }} = s.{{ c }}
+{% endfor %}
+WHEN MATCHED AND s.{{ k }} > t.{{ k }} THEN UPDATE SET *
+WHEN NOT MATCHED THEN INSERT *;
+
+{% if p.freshness_sla_hours %}
+-- COMMAND ----------
+
+-- DQ: freshness. Fail if the newest row is older than the SLA.
+SELECT raise_error('DQ check failed: {{ r.target_table }} is staler than {{ p.freshness_sla_hours }}h')
+FROM (SELECT MAX({{ k }}) AS newest FROM {{ r.target_table }})
+WHERE newest IS NULL OR newest < current_timestamp() - INTERVAL {{ p.freshness_sla_hours }} HOURS;
+
+{% endif %}
+-- COMMAND ----------
+
+{{ m.audit(r) }}

@@ -1,0 +1,28 @@
+{
+  "bundle_name": "orders_incremental_load",
+  "pattern": "incremental_load",
+  "description": "Daily incremental load of order events from S3 into production Unity Catalog",
+  "created_by": "data-team",
+  "created_at": "2026-10-01",
+  "parameters": {
+    "source_path": "s3://prod-data-lake/events/orders/",
+    "source_format": "parquet",
+    "destination_catalog": "production",
+    "destination_schema": "raw_events",
+    "destination_table": "orders",
+    "primary_key_columns": ["order_id"],
+    "incremental_key": "updated_at",
+    "cluster_by": ["order_date"],
+    "not_null_columns": ["customer_id", "order_date"],
+    "freshness_sla_hours": 26
+  },
+  "cluster_config": {
+    "node_type_id": "i3.xlarge",
+    "autoscale": {"min_workers": 2, "max_workers": 8}
+  },
+  "job_config": {
+    "schedule": "0 2 * * *",
+    "timeout_seconds": 3600,
+    "email_on_failure": ["data-team@company.com"]
+  }
+}

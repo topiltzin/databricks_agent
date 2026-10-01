@@ -1,0 +1,53 @@
+{
+  "bundle_name": "orders_incremental_load",
+  "pattern": "incremental_load",
+  "description": "Daily incremental load of order events from S3 into production Unity Catalog",
+  "version": "1.0.0",
+  "created_by": "data-team",
+  "created_at": "2026-10-01",
+  "parameters": {
+    "source_path": "s3://prod-data-lake/events/orders/",
+    "source_format": "parquet",
+    "destination_catalog": "production",
+    "destination_schema": "raw_events",
+    "destination_table": "orders",
+    "primary_key_columns": [
+      "order_id"
+    ],
+    "incremental_key": "updated_at",
+    "cluster_by": [
+      "order_date"
+    ],
+    "partition_columns": [],
+    "has_header": true,
+    "delimiter": ",",
+    "not_null_columns": [
+      "customer_id",
+      "order_date"
+    ],
+    "min_expected_rows": 1,
+    "freshness_sla_hours": 26
+  },
+  "cluster_config": {
+    "spark_version": "15.4.x-scala2.12",
+    "node_type_id": "i3.xlarge",
+    "driver_node_type_id": null,
+    "num_workers": null,
+    "autoscale": {
+      "min_workers": 2,
+      "max_workers": 8
+    },
+    "photon": true
+  },
+  "job_config": {
+    "schedule": "0 2 * * *",
+    "timezone": "UTC",
+    "max_concurrent_runs": 1,
+    "timeout_seconds": 3600,
+    "max_retries": 1,
+    "email_on_failure": [
+      "data-team@company.com"
+    ],
+    "workspace_root": "/Workspace/ETL"
+  }
+}

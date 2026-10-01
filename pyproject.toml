@@ -1,0 +1,24 @@
+[project]
+name = "databricks-agent"
+version = "0.1.0"
+description = "Generate best-practice Databricks ETL bundles from validated requests"
+requires-python = ">=3.11"
+dependencies = ["pydantic>=2.5", "click>=8.1", "jinja2>=3.1", "pyyaml>=6.0"]
+
+[project.scripts]
+databricks-agent = "src.cli:cli"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.black]
+line-length = 100
+
+[tool.mypy]
+python_version = "3.11"
+strict = true

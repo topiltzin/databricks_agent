@@ -1,0 +1,48 @@
+{%- import '_macros.sql.j2' as m -%}
+{%- set p = r.parameters -%}
+{%- set pk = p.primary_key_columns -%}
+{{ m.header(r, "Full refresh: " ~ p.source_format ~ " snapshot -> " ~ r.target_table) }}
+
+-- COMMAND ----------
+
+{{ m.source_view('source_raw', p) }}
+
+-- COMMAND ----------
+
+-- All checks run BEFORE the table is replaced, so a bad snapshot never reaches consumers.
+DECLARE OR REPLACE VARIABLE rows_loaded BIGINT DEFAULT 0;
+SET VAR rows_loaded = (SELECT COUNT(*) FROM source_raw);
+
+-- DQ: completeness. Guard against empty or truncated source exports.
+SELECT raise_error(concat('DQ check failed: only ', CAST(n AS STRING),
+                          ' rows, expected >= {{ p.min_expected_rows }}'))
+FROM (SELECT rows_loaded AS n)
+WHERE n < {{ p.min_expected_rows }};
+
+{% if p.source_format in ('csv', 'json') %}
+-- DQ: no rows the reader could not parse (they land in _rescued_data instead of failing).
+{{ m.fail_if("SELECT COUNT(*) AS n FROM source_raw WHERE _rescued_data IS NOT NULL", "unparseable rows in _rescued_data") }}
+
+{% endif %}
+{% if pk %}
+{{ m.not_null_check('source_raw', pk, 'primary key (' ~ pk | join(', ') ~ ')') }}
+
+-- DQ: uniqueness of the primary key.
+{{ m.fail_if("SELECT COUNT(*) AS n FROM (SELECT 1 FROM source_raw GROUP BY " ~ pk | join(', ') ~ " HAVING COUNT(*) > 1)", "duplicate primary keys") }}
+
+{% endif %}
+{% if p.not_null_columns %}
+{{ m.not_null_check('source_raw', p.not_null_columns, 'required columns (' ~ p.not_null_columns | join(', ') ~ ')') }}
+
+{% endif %}
+-- COMMAND ----------
+
+-- Atomic swap. Delta keeps the previous version: roll back with
+--   RESTORE TABLE {{ r.target_table }} TO VERSION AS OF <n>
+CREATE OR REPLACE TABLE {{ r.target_table }}
+{{ m.layout(p) -}}
+AS SELECT *{{ ' EXCEPT (_rescued_data)' if p.source_format in ('csv', 'json') }} FROM source_raw;
+
+-- COMMAND ----------
+
+{{ m.audit(r) }}
