@@ -1,0 +1,59 @@
+{
+  "version": 3,
+  "skills": {
+    "senior-data-engineer": {
+      "source": "alirezarezvani/claude-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/alirezarezvani/claude-skills.git",
+      "skillPath": "engineering-team/skills/senior-data-engineer/SKILL.md",
+      "skillFolderHash": "5a6fd1d12a8572341aa75ecc64d0a0cf78261329",
+      "installedAt": "2026-03-30T11:03:54.238Z",
+      "updatedAt": "2026-07-03T12:37:28.718Z"
+    },
+    "databricks": {
+      "source": "databricks/databricks-agent-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/databricks/databricks-agent-skills.git",
+      "skillPath": "skills/databricks/SKILL.md",
+      "skillFolderHash": "89791693eaab7f8fd4a34e93e4b401e8a58cadda",
+      "installedAt": "2026-03-31T08:28:05.172Z",
+      "updatedAt": "2026-03-31T08:28:05.172Z"
+    },
+    "persona-project-manager": {
+      "source": "googleworkspace/cli",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/googleworkspace/cli.git",
+      "skillPath": "skills/persona-project-manager/SKILL.md",
+      "skillFolderHash": "143d33d7d9601a1d32515b81299b08d2a1d289e6",
+      "installedAt": "2026-03-31T08:28:18.928Z",
+      "updatedAt": "2026-03-31T08:28:18.928Z"
+    },
+    "data-architecture": {
+      "source": "melodic-software/claude-code-plugins",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/melodic-software/claude-code-plugins.git",
+      "skillPath": "plugins/systems-design/skills/data-architecture/SKILL.md",
+      "skillFolderHash": "4a441e8417676ccc1d7e231f34908670d43d34bc",
+      "installedAt": "2026-03-31T08:29:20.107Z",
+      "updatedAt": "2026-03-31T08:29:20.107Z"
+    }
+  },
+  "dismissed": {
+    "findSkillsPrompt": true
+  },
+  "lastSelectedAgents": [
+    "amp",
+    "cline",
+    "codex",
+    "cursor",
+    "droid",
+    "gemini-cli",
+    "github-copilot",
+    "kilo",
+    "kimi-code-cli",
+    "opencode",
+    "pi",
+    "warp",
+    "zed"
+  ]
+}
